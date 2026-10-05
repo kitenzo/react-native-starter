@@ -8,6 +8,11 @@ export const config = {
     kitenzoApiKey: process.env.EXPO_PUBLIC_KITENZO_API_KEY?.trim() ?? '',
     countryCode: process.env.EXPO_PUBLIC_COUNTRY_CODE?.trim().toUpperCase() || undefined,
     storefrontToken: process.env.EXPO_PUBLIC_STOREFRONT_TOKEN?.trim() || undefined,
+    /** The bundles to show, in this order. Empty shows every published bundle. */
+    bundleIds: String(process.env.EXPO_PUBLIC_BUNDLE_IDS ?? '')
+        .split(',')
+        .map((id: string) => Number(id.trim()))
+        .filter((id: number) => Number.isInteger(id) && id > 0),
     /** Point the SDK at another Kitenzo environment. Leave unset for production. */
     kitenzoBaseUrl: process.env.EXPO_PUBLIC_KITENZO_BASE_URL?.trim() || undefined,
 };

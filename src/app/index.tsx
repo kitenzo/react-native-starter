@@ -1,22 +1,24 @@
-import { htmlToPlainText } from '@kitenzo/core';
+import { type Bundle, htmlToPlainText } from '@kitenzo/core';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Loading, Message } from '@/components/ui';
-import { missingConfig } from '@/config';
+import { config, missingConfig } from '@/config';
 import { useAsync } from '@/hooks/useAsync';
 import { kitenzo } from '@/kitenzo';
 import { colors, radius, space, type } from '@/theme';
 
-/** Every published bundle in the shop. */
+/** The shop's published bundles, or the ones `EXPO_PUBLIC_BUNDLE_IDS` features, in that order. */
+async function loadBundles(): Promise<Bundle[]> {
+    if (!kitenzo) return [];
+    const bundles = await kitenzo.listBundles();
+    if (!config.bundleIds.length) return bundles;
+    return config.bundleIds.flatMap((id) => bundles.filter((bundle) => bundle.id === id));
+}
+
 export default function BundlesScreen() {
-    const {
-        data: bundles,
-        error,
-        loading,
-        reload,
-    } = useAsync(() => (kitenzo ? kitenzo.listBundles() : Promise.resolve([])), []);
+    const { data: bundles, error, loading, reload } = useAsync(loadBundles, []);
 
     if (!kitenzo) {
         return (
