@@ -86,6 +86,8 @@ src/
 - **Native checkout.** Swap the in-app browser for [Shopify Checkout Sheet Kit](https://shopify.dev/docs/storefronts/mobile/checkout-sheet-kit) for a native checkout sheet (it needs a development build, not Expo Go).
 - **Rate limits.** Tokenless Storefront access is rate limited per shopper. Set `EXPO_PUBLIC_STOREFRONT_TOKEN` to a public Storefront API token for headroom.
 - **A/B tests.** Off in this app, because Kitenzo's tests route shoppers between bundle pages by URL. Turn on `abTesting` in [`src/kitenzo.ts`](src/kitenzo.ts) once you map those to your screens.
+- **Personalisation.** Bundles that ask for a name, a message or a photo are refused by the SDK until those fields are sent. `@kitenzo/core` has the helpers (`validatePersonalisationFields`, `personalisationValuesToProperties`); this starter doesn't collect them yet.
+- **Sizes for included products.** Products every bundle includes use the variant the merchant set. A picker for them is a good next step for apparel.
 - **Classic bundles.** This starter is built for Native bundles. Single- and multiple-product bundles work through the same flow, but have not been tested here yet.
 
 ## About the API key

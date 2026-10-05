@@ -3,6 +3,7 @@ import {
     type BundleBuilderSnapshot,
     type BundleCartState,
     type BundleDetail,
+    type BundleOffer,
     calculatePriceWithConditions,
     getDiscountLadderProgress,
     getDiscountTierText,
@@ -19,6 +20,7 @@ import { Button } from './ui';
 
 interface BundleSummaryProps {
     bundle: BundleDetail;
+    offer: BundleOffer;
     snapshot: BundleBuilderSnapshot;
     settings: ShopSettings | undefined;
     money: MoneyFormatter;
@@ -29,7 +31,7 @@ interface BundleSummaryProps {
 }
 
 /** The bar under the builder: what is picked, what it costs, and what to do next. */
-export function BundleSummary({ bundle, snapshot, settings, money, cart, nextStep, onAdd }: BundleSummaryProps) {
+export function BundleSummary({ bundle, offer, snapshot, settings, money, cart, nextStep, onAdd }: BundleSummaryProps) {
     const insets = useSafeAreaInsets();
     const { selections, progress, isSatisfied, isSectionValid, problems } = snapshot;
     const picked = progress.quantity - progress.requiredQuantity;
@@ -42,10 +44,17 @@ export function BundleSummary({ bundle, snapshot, settings, money, cart, nextSte
     }, [bundle, selections, settings?.currency]);
     const saving = Number(pricing.originalPrice) - Number(pricing.discountedPrice);
 
-    const thumbnails = useMemo(() => pickedImages(bundle, snapshot), [bundle, snapshot]);
+    const thumbnails = useMemo(() => pickedImages(bundle, offer, snapshot), [bundle, offer, snapshot]);
     const hint = statusLine(bundle, snapshot, money, picked);
 
     const showNext = nextStep !== null && !isSatisfied && isSectionValid;
+
+    // A rule the selection breaks (a price limit, "sold in pairs"), once every step is
+    // filled. Counts are left out: the hint above already says "pick 1 more".
+    const stepsFilled = !Object.values(progress.sections).some(({ missing }) => missing > 0) && progress.missing === 0;
+    const problem = stepsFilled
+        ? problems.find(({ rule }) => rule?.type !== 'total-number-of-products')
+        : undefined;
 
     return (
         <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, space.lg) }]}>
@@ -62,11 +71,11 @@ export function BundleSummary({ bundle, snapshot, settings, money, cart, nextSte
                     <Text style={type.small} accessibilityLiveRegion="polite">
                         {hint}
                     </Text>
-                    {problems.length && picked > 0 && progress.missing === 0 ? (
-                        <Text style={[type.small, styles.problem]}>{problems[0]?.message}</Text>
+                    {problem ? (
+                        <Text style={[type.small, styles.problem]}>{problem.message}</Text>
                     ) : null}
                 </View>
-                {picked > 0 ? (
+                {progress.quantity > 0 ? (
                     <View style={styles.price}>
                         {saving > 0.004 ? (
                             <Text style={[type.small, styles.was]}>{money.format(pricing.originalPrice)}</Text>
@@ -116,12 +125,19 @@ function statusLine(
             next.discountType === 'percentage' ? `${Number(next.discount)}% off` : `${money.format(next.discount)} off`;
         return `Add ${missing} more for ${off}`;
     }
-    return picked > 0 ? `${picked} ${picked === 1 ? 'item' : 'items'} in your set` : 'Choose your items to begin';
+    if (picked > 0) return `${picked} ${picked === 1 ? 'item' : 'items'} in your set`;
+    return progress.requiredQuantity > 0 ? 'Everything in this bundle is included' : 'Choose your items to begin';
 }
 
-/** One thumbnail per picked unit, for the strip above the total. */
-function pickedImages(bundle: BundleDetail, snapshot: BundleBuilderSnapshot): { key: string; uri: string }[] {
+/** One thumbnail per unit in the bundle, included products first, for the strip above the total. */
+function pickedImages(bundle: BundleDetail, offer: BundleOffer, snapshot: BundleBuilderSnapshot): { key: string; uri: string }[] {
     const images: { key: string; uri: string }[] = [];
+    for (const { required, product, quantity } of offer.requiredProducts) {
+        const uri = product?.image ?? product?.images?.[0]?.url;
+        for (let unit = 0; uri && unit < quantity; unit += 1) {
+            images.push({ key: `required-${required.shopifyProductId}-${unit}`, uri });
+        }
+    }
     for (const section of bundle.sections) {
         for (const pick of snapshot.selections[section.id] ?? []) {
             const product = section.products.find(({ variants }) => variants.some(({ id }) => id === pick.variantId));

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     type AddBlockedReason,
     type BundleBuilder,
@@ -33,10 +33,13 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, soldOut, sectionId, builder, selections, money }: ProductCardProps) {
-    const [variantId, setVariantId] = useState(
-        () => (product.variants.find(isVariantBuyable) ?? product.variants[0])?.id,
+    // One entry per variant id, in case a product lists the same variant twice.
+    const variants = useMemo(
+        () => product.variants.filter((v, index) => product.variants.findIndex(({ id }) => id === v.id) === index),
+        [product.variants],
     );
-    const variant = product.variants.find(({ id }) => id === variantId) ?? product.variants[0];
+    const [variantId, setVariantId] = useState(() => (variants.find(isVariantBuyable) ?? variants[0])?.id);
+    const variant = variants.find(({ id }) => id === variantId) ?? variants[0];
     if (!variant) return null;
 
     // A pick is held under the bundle's own spelling of the id, so this comparison holds.
@@ -73,16 +76,16 @@ export function ProductCard({ product, soldOut, sectionId, builder, selections, 
                     {surcharge > 0 ? `  +${money.format(surcharge)}` : ''}
                 </Text>
 
-                {product.variants.length > 1 ? (
+                {variants.length > 1 ? (
                     <View style={styles.variants}>
-                        {product.variants.map((option) => {
+                        {variants.map((option) => {
                             const selected = option.id === variant.id;
                             const buyable = isVariantBuyable(option);
                             return (
                                 <Pressable
                                     key={option.id}
                                     accessibilityRole="radio"
-                                    accessibilityState={{ selected, disabled: !buyable }}
+                                    accessibilityState={{ checked: selected, disabled: !buyable }}
                                     accessibilityLabel={`${option.title}${buyable ? '' : ', sold out'}`}
                                     disabled={!buyable}
                                     onPress={() => setVariantId(option.id)}
