@@ -1,12 +1,23 @@
 {
   "name": "kitenzo-react-native-starter",
-  "version": "1.0.0",
-  "main": "index.ts",
+  "version": "0.1.0",
+  "main": "expo-router/entry",
   "dependencies": {
+    "@kitenzo/core": "0.10.0",
     "expo": "~57.0.26",
+    "expo-constants": "~57.0.20",
+    "expo-image": "~57.0.5",
+    "expo-linking": "~57.0.11",
+    "expo-router": "~57.0.24",
     "expo-status-bar": "~57.0.1",
+    "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
-    "react-native": "0.86.3"
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-url-polyfill": "4.0.0",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
@@ -16,7 +27,15 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "build:web": "expo export --platform web"
   },
-  "private": true
+  "private": true,
+  "description": "Kitenzo bundles in a native iOS and Android app: an Expo starter built on @kitenzo/core and the Shopify Storefront API.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kitenzo/react-native-starter.git"
+  }
 }
